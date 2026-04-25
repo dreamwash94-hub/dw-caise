@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DW Caisse">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#15803D">
+<title>Dreamwash — Fermeture de caisse</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<script>
+const manifestData = {
+  name:"Dreamwash Caisse",short_name:"DW Caisse",
+  description:"Fermeture de caisse Dreamwash",
+  start_url:"./",display:"fullscreen",orientation:"any",
+  background_color:"#15803D",theme_color:"#15803D",
+  icons:[{src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%2315803D'/%3E%3Ctext x='256' y='340' font-size='260' text-anchor='middle' fill='%2386EFAC'%3E%F0%9F%92%B5%3C/text%3E%3C/svg%3E",sizes:"512x512",type:"image/svg+xml",purpose:"any maskable"}]
+};
+const blob=new Blob([JSON.stringify(manifestData)],{type:'application/json'});
+const link=document.createElement('link');link.rel='manifest';link.href=URL.createObjectURL(blob);
+document.head.appendChild(link);
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, query, where, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+const firebaseConfig = {
+  apiKey:"AIzaSyCSZqfL3G-DK0VzNmptblT7F_kgq5R4Oww",
+  authDomain:"dreamwash-d4a2c.firebaseapp.com",
+  projectId:"dreamwash-d4a2c",
+  storageBucket:"dreamwash-d4a2c.firebasestorage.app",
+  messagingSenderId:"294836515742",
+  appId:"1:294836515742:web:3fdbe1b28db8f97b7cdc8f"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+window._db = db;
+window._firebase = { collection, addDoc, getDocs, query, where, doc, getDoc };
+window._firebaseReady = true;
+
+window.loadTechsFromFirebase = async function() {
+  try {
+    const snap = await getDoc(doc(db,'portail','techs'));
+    if(snap.exists()){const t=JSON.parse(snap.data().data);if(t?.length)return t;}
+  } catch(e){}
+  return null;
+};
+
+window.loadCaissesFirebase = async function(dateStr) {
+  try {
+    const snap = await getDocs(collection(db,'caisses'));
+    const data=[];
+    snap.forEach(d=>data.push({...d.data(),_id:d.id}));
+    return data.filter(e=>e.date===dateStr).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+  } catch(e){ return []; }
+};
+
+let _techListenerReady = false;
+onSnapshot(doc(db,'portail','techs'), (snap) => {
+  if (!_techListenerReady) { _techListenerReady = true; return; }
+  if (!snap.exists()) return;
+  try {
+    const fbTechs = JSON.parse(snap.data().data);
+    if (fbTechs?.length > 0 && typeof TECHS !== 'undefined') {
+      TECHS = fbTechs.filter(t=>!t.statut||t.statut==='actif')
+        .map(t=>({nom:t.nom,code:t.code||'0000',centre:t.centre||'Aeroville A',color:t.color||'#4ADE80',poste:t.poste||''}));
+      localStorage.setItem('dw_caisse_techs',JSON.stringify(TECHS));
+    }
+  } catch(e) {}
+});
+console.log('🔥 Firebase Caisse connecté ✅');
+</script>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;}
+html{height:100%;height:-webkit-fill-available;overflow:hidden;}
+body{
+  font-family:'Inter',sans-serif;color:#fff;
+  height:100vh;height:-webkit-fill-available;
+  overflow:hidden;position:fixed;width:100%;
+  background:linear-gradient(145deg,#14532D 0%,#15803D 40%,#16A34A 100%);
+}
+.app{display:flex;flex-direction:column;height:100%;width:100%;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);}
+
+/* ═══ HEADER ═══ */
+.header{display:flex;justify-content:space-between;align-items:center;padding:clamp(8px,1.5vh,16px) clamp(16px,3vw,32px);background:rgba(255,255,255,0.08);border-bottom:1px solid rgba(255,255,255,0.12);backdrop-filter:blur(10px);flex-shrink:0;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-icon{width:clamp(32px,4vw,42px);height:clamp(32px,4vw,42px);background:rgba(255,255,255,0.2);border-radius:clamp(8px,1.5vw,12px);display:flex;align-items:center;justify-content:center;font-size:clamp(16px,2.5vw,22px);border:1px solid rgba(255,255,255,0.3);}
+.logo-txt{font-size:clamp(14px,2vw,18px);font-weight:800;color:#fff;}
+.logo-sub{font-size:clamp(9px,1.2vw,11px);color:rgba(255,255,255,0.6);font-weight:500;margin-top:1px;}
+.clock-wrap{text-align:right;}
+.clock-time{font-size:clamp(18px,2.5vw,26px);font-weight:800;font-variant-numeric:tabular-nums;color:#fff;}
+.clock-date{font-size:clamp(9px,1.1vw,11px);color:rgba(255,255,255,0.5);margin-top:1px;}
+
+/* ═══ MAIN ═══ */
+.main{flex:1;display:flex;overflow:hidden;min-height:0;}
+.view{display:none;width:100%;overflow:hidden;}
+.view.active{display:flex;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.view.active{animation:fadeUp .2s ease;}
+
+/* ═══ CODE SCREEN ═══ */
+#v-code{align-items:center;justify-content:center;}
+@media (orientation:portrait){
+  .code-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;max-width:360px;padding:clamp(16px,3vh,32px) 20px;gap:clamp(12px,2.5vh,24px);}
+  .welcome-box{text-align:center;}
+  .welcome-title{font-size:clamp(24px,6vw,36px);font-weight:900;color:#fff;margin-bottom:6px;letter-spacing:-0.5px;}
+  .welcome-sub{font-size:clamp(12px,3vw,15px);color:rgba(255,255,255,0.65);font-weight:400;line-height:1.4;}
+  .keypad-wrap{width:100%;display:flex;flex-direction:column;align-items:center;gap:clamp(12px,2.5vh,20px);}
+  .keypad{gap:clamp(8px,1.5vw,12px);max-width:300px;}
+  .key{font-size:clamp(22px,5vw,30px);border-radius:clamp(12px,2vw,16px);}
+  .key-sub{font-size:clamp(7px,1.5vw,9px);}
+  .dots{gap:clamp(14px,3vw,20px);}
+  .dot{width:clamp(16px,3.5vw,20px);height:clamp(16px,3.5vw,20px);}
+}
+@media (orientation:landscape){
+  .code-wrap{display:flex;flex-direction:row;align-items:center;justify-content:center;width:100%;padding:clamp(12px,2vh,24px) clamp(20px,5vw,60px);gap:clamp(30px,6vw,80px);}
+  .welcome-box{flex:1;text-align:left;max-width:340px;}
+  .welcome-title{font-size:clamp(22px,4vw,40px);font-weight:900;color:#fff;margin-bottom:8px;letter-spacing:-0.5px;}
+  .welcome-sub{font-size:clamp(12px,1.8vw,16px);color:rgba(255,255,255,0.65);font-weight:400;line-height:1.4;}
+  .keypad-wrap{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:clamp(10px,2vh,16px);}
+  .keypad{gap:clamp(6px,1vw,10px);max-width:clamp(220px,30vw,280px);}
+  .key{font-size:clamp(18px,3vw,26px);border-radius:clamp(10px,1.5vw,14px);}
+  .key-sub{font-size:clamp(6px,0.8vw,8px);}
+  .dots{gap:clamp(12px,2vw,16px);}
+  .dot{width:clamp(14px,2vw,18px);height:clamp(14px,2vw,18px);}
+}
+
+/* ═══ DOTS ═══ */
+.dots{display:flex;justify-content:center;}
+.dot{border-radius:50%;background:rgba(255,255,255,0.25);border:2px solid rgba(255,255,255,0.3);transition:all .2s;}
+.dot.on{background:#fff;border-color:#fff;box-shadow:0 0 16px rgba(255,255,255,0.6);}
+.dot.err{background:#EF4444;border-color:#EF4444;animation:shake .3s ease;}
+.dot.ok{background:#4ADE80;border-color:#4ADE80;box-shadow:0 0 16px rgba(74,222,128,0.6);}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+/* ═══ KEYPAD ═══ */
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);width:100%;}
+.key{width:100%;aspect-ratio:1.2;background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.2);font-weight:700;color:#fff;cursor:pointer;font-family:'Inter',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:all .1s;-webkit-user-select:none;user-select:none;}
+.key:active{background:rgba(255,255,255,0.35);transform:scale(0.93);}
+.key-sub{color:rgba(255,255,255,0.4);font-weight:500;letter-spacing:.1em;}
+.key.del{color:rgba(255,255,255,0.5);}
+.key.empty{opacity:0;pointer-events:none;}
+
+/* ═══ MONTANT SCREEN ═══ */
+#v-montant{align-items:center;justify-content:center;overflow:auto;}
+.montant-wrap{
+  text-align:center;width:100%;max-width:460px;
+  padding:clamp(16px,3vh,32px) clamp(20px,5vw,40px);
+  display:flex;flex-direction:column;gap:clamp(12px,2vh,20px);
+}
+.tech-pill{
+  display:inline-flex;align-items:center;gap:10px;
+  background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);
+  border-radius:40px;padding:clamp(8px,1.5vh,12px) clamp(14px,2.5vw,22px);
+  justify-content:center;
+}
+.tech-pill-av{width:clamp(32px,5vw,42px);height:clamp(32px,5vw,42px);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:clamp(14px,2.5vw,18px);font-weight:900;flex-shrink:0;}
+.tech-pill-name{font-size:clamp(13px,2vw,16px);font-weight:800;color:#fff;}
+.tech-pill-centre{font-size:clamp(10px,1.4vw,12px);color:rgba(255,255,255,0.55);margin-top:1px;}
+.amount-display{
+  background:rgba(0,0,0,0.2);
+  border:2px solid rgba(255,255,255,0.2);
+  border-radius:clamp(14px,2vw,20px);
+  padding:clamp(14px,3vh,24px) clamp(16px,3vw,24px);
+  font-size:clamp(36px,9vw,64px);font-weight:900;
+  font-variant-numeric:tabular-nums;letter-spacing:-1px;
+  color:#fff;line-height:1;
+  min-height:clamp(70px,14vh,100px);
+  display:flex;align-items:center;justify-content:center;
+}
+.amount-display.has-value{border-color:rgba(74,222,128,0.5);background:rgba(74,222,128,0.08);}
+.amount-unit{font-size:clamp(20px,4vw,32px);font-weight:700;color:rgba(255,255,255,0.5);margin-left:6px;}
+.amount-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(6px,1.2vw,10px);width:100%;}
+.akey{
+  width:100%;aspect-ratio:1.4;
+  background:rgba(255,255,255,0.12);
+  border:1.5px solid rgba(255,255,255,0.2);
+  font-size:clamp(20px,4vw,28px);font-weight:700;color:#fff;
+  cursor:pointer;font-family:'Inter',sans-serif;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:clamp(10px,1.5vw,14px);
+  transition:all .1s;-webkit-user-select:none;user-select:none;
+}
+.akey:active{background:rgba(255,255,255,0.35);transform:scale(0.93);}
+.akey.del{color:rgba(255,255,255,0.5);}
+.akey.virgule{font-size:clamp(16px,3vw,22px);}
+.akey.zero{background:rgba(255,255,255,0.08);}
+.btn-valider{
+  width:100%;padding:clamp(16px,3vh,22px);
+  background:rgba(255,255,255,0.95);
+  border:none;border-radius:clamp(14px,2vw,20px);
+  color:#15803D;font-size:clamp(18px,3vw,22px);font-weight:900;
+  cursor:pointer;font-family:'Inter',sans-serif;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  box-shadow:0 8px 30px rgba(0,0,0,0.2);
+  transition:all .15s;
+  opacity:0.4;pointer-events:none;
+}
+.btn-valider.enabled{opacity:1;pointer-events:all;}
+.btn-valider.enabled:active{transform:scale(0.97);}
+.btn-back{width:100%;padding:clamp(11px,1.8vh,14px);background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.2);border-radius:clamp(10px,1.5vw,14px);color:rgba(255,255,255,0.7);font-size:clamp(13px,2vw,15px);font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
+
+/* ═══ SUCCESS ═══ */
+#v-success{align-items:center;justify-content:center;overflow:auto;}
+.success-wrap{text-align:center;width:100%;max-width:520px;padding:clamp(20px,4vh,50px) clamp(20px,5vw,50px);}
+.success-circle{width:clamp(90px,14vw,120px);height:clamp(90px,14vw,120px);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:clamp(40px,8vw,56px);margin:0 auto clamp(16px,3vh,28px);background:rgba(74,222,128,0.2);border:3px solid rgba(74,222,128,0.5);animation:popIn .4s cubic-bezier(0.175,0.885,0.32,1.275);}
+@keyframes popIn{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
+.success-name{font-size:clamp(26px,5vw,40px);font-weight:900;color:#fff;margin-bottom:6px;letter-spacing:-0.5px;}
+.success-centre{font-size:clamp(13px,2vw,16px);color:rgba(255,255,255,0.65);font-weight:500;margin-bottom:8px;}
+.success-amount{
+  font-size:clamp(48px,10vw,80px);font-weight:900;
+  font-variant-numeric:tabular-nums;letter-spacing:-2px;
+  color:#4ADE80;margin:clamp(10px,2vh,20px) 0;line-height:1;
+  text-shadow:0 4px 20px rgba(74,222,128,0.3);
+}
+.success-info{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:clamp(12px,2vw,16px);padding:clamp(10px,1.5vh,16px) clamp(14px,2vw,20px);margin-bottom:clamp(14px,2.5vh,24px);}
+.success-info-lbl{font-size:clamp(10px,1.2vw,12px);color:rgba(255,255,255,0.5);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;}
+.success-info-val{font-size:clamp(12px,1.8vw,14px);font-weight:700;color:rgba(255,255,255,0.9);}
+.progress-bar{height:4px;background:rgba(255,255,255,0.2);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;background:rgba(255,255,255,0.8);border-radius:3px;transition:width 1s linear;}
+.progress-txt{font-size:clamp(10px,1.3vw,12px);color:rgba(255,255,255,0.4);text-align:center;margin-top:8px;}
+
+/* ═══ ERROR ═══ */
+#v-error{align-items:center;justify-content:center;}
+.error-wrap{text-align:center;max-width:380px;padding:clamp(24px,5vh,50px) clamp(20px,5vw,40px);}
+.error-icon{font-size:clamp(56px,10vw,80px);margin-bottom:clamp(14px,2.5vh,24px);animation:wobble .5s ease;}
+@keyframes wobble{0%,100%{transform:rotate(0)}25%{transform:rotate(-5deg)}75%{transform:rotate(5deg)}}
+.error-title{font-size:clamp(24px,4.5vw,32px);font-weight:900;color:#fff;margin-bottom:8px;}
+.error-sub{font-size:clamp(13px,2vw,16px);color:rgba(255,255,255,0.6);margin-bottom:clamp(24px,4vh,40px);line-height:1.5;}
+.btn-retry{width:100%;padding:clamp(14px,2.5vh,20px);background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);border-radius:clamp(12px,2vw,16px);color:#fff;font-size:clamp(15px,2.5vw,18px);font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;}
+
+/* ═══ ADMIN CODE ═══ */
+#v-admin-code{align-items:center;justify-content:center;overflow:auto;}
+.admin-code-wrap{text-align:center;max-width:360px;width:100%;padding:clamp(24px,4vh,50px) clamp(20px,5vw,40px);display:flex;flex-direction:column;align-items:center;gap:clamp(12px,2.5vh,20px);}
+
+/* ═══ ADMIN DASHBOARD ═══ */
+#v-admin{align-items:stretch;flex-direction:column;}
+.admin-inner{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:clamp(14px,2.5vh,28px) clamp(16px,3vw,32px);display:flex;flex-direction:column;gap:clamp(10px,2vh,18px);}
+.admin-topbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+.admin-title-txt{font-size:clamp(18px,3.5vw,28px);font-weight:900;color:#fff;}
+.admin-btn{padding:clamp(7px,1vh,10px) clamp(12px,2vw,18px);border-radius:10px;font-size:clamp(11px,1.5vw,13px);font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:#fff;transition:all .15s;}
+.admin-stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(8px,1.5vw,14px);}
+.admin-stat-box{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:clamp(12px,1.5vw,16px);padding:clamp(12px,2vh,20px);text-align:center;}
+.admin-stat-val{font-size:clamp(24px,5vw,40px);font-weight:900;color:#fff;line-height:1;}
+.admin-stat-lbl{font-size:clamp(10px,1.2vw,12px);color:rgba(255,255,255,0.5);margin-top:6px;font-weight:500;}
+.log-section-title{font-size:clamp(10px,1.2vw,12px);font-weight:700;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.1em;}
+.log-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(clamp(220px,28vw,300px),1fr));gap:8px;}
+.log-card{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:clamp(10px,1.5vw,14px);padding:clamp(10px,1.5vh,14px) clamp(12px,2vw,16px);}
+.log-card-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.log-av{width:clamp(34px,4.5vw,42px);height:clamp(34px,4.5vw,42px);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:clamp(12px,1.8vw,15px);flex-shrink:0;background:rgba(255,255,255,0.2);}
+.log-name{font-size:clamp(12px,1.8vw,14px);font-weight:700;color:#fff;}
+.log-centre{font-size:clamp(10px,1.3vw,11px);color:rgba(255,255,255,0.5);margin-top:1px;}
+.log-total{margin-left:auto;font-size:clamp(14px,2.2vw,18px);font-weight:900;color:#4ADE80;flex-shrink:0;}
+.log-entries{display:flex;flex-direction:column;gap:4px;}
+.log-entry{display:flex;justify-content:space-between;align-items:center;padding:4px 8px;background:rgba(255,255,255,0.06);border-radius:6px;}
+.log-entry-time{font-size:clamp(10px,1.2vw,11px);color:rgba(255,255,255,0.5);}
+.log-entry-amt{font-size:clamp(11px,1.5vw,13px);font-weight:700;color:rgba(255,255,255,0.9);}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">💵</div>
+    <div><div class="logo-txt">Dreamwash</div><div class="logo-sub">Fermeture de caisse</div></div>
+  </div>
+  <div class="clock-wrap">
+    <div class="clock-time" id="clock">--:--:--</div>
+    <div class="clock-date" id="datedisp">--</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- SAISIE CODE -->
+  <div class="view active" id="v-code">
+    <div class="code-wrap">
+      <div class="welcome-box">
+        <div class="welcome-title">Bonne journée ! 💵</div>
+        <div class="welcome-sub">Entrez votre code pour déclarer votre caisse du jour</div>
+      </div>
+      <div class="keypad-wrap">
+        <div class="dots" id="dots">
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+        <div class="keypad" id="keypad"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SAISIE MONTANT -->
+  <div class="view" id="v-montant">
+    <div class="montant-wrap">
+      <div class="tech-pill">
+        <div class="tech-pill-av" id="m-avatar"></div>
+        <div>
+          <div class="tech-pill-name" id="m-name"></div>
+          <div class="tech-pill-centre" id="m-centre"></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:clamp(11px,1.5vw,13px);font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;text-align:center;">Montant espèces à déclarer</div>
+        <div class="amount-display" id="amount-display">
+          <span id="amount-val">0</span><span class="amount-unit">,00 €</span>
+        </div>
+      </div>
+      <div class="amount-keypad" id="amount-keypad"></div>
+      <button class="btn-valider" id="btn-valider" onclick="confirmerCaisse()">✅ Déclarer la caisse</button>
+      <button class="btn-back" onclick="reset()">← Ce n'est pas moi</button>
+    </div>
+  </div>
+
+  <!-- SUCCÈS -->
+  <div class="view" id="v-success">
+    <div class="success-wrap">
+      <div class="success-circle">✓</div>
+      <div class="success-name" id="sc-name"></div>
+      <div class="success-centre" id="sc-centre"></div>
+      <div class="success-amount" id="sc-amount"></div>
+      <div class="success-info">
+        <div class="success-info-lbl">💵 Caisse enregistrée</div>
+        <div class="success-info-val" id="sc-info"></div>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:100%"></div></div>
+      <div class="progress-txt" id="prog-txt">Retour dans 6s…</div>
+    </div>
+  </div>
+
+  <!-- ERREUR -->
+  <div class="view" id="v-error">
+    <div class="error-wrap">
+      <div class="error-icon">🚫</div>
+      <div class="error-title">Code non reconnu</div>
+      <div class="error-sub">Ce code ne correspond à aucun technicien.<br>Vérifiez votre code dans le portail.</div>
+      <button class="btn-retry" onclick="reset()">← Réessayer</button>
+    </div>
+  </div>
+
+  <!-- ADMIN CODE -->
+  <div class="view" id="v-admin-code">
+    <div class="admin-code-wrap">
+      <button class="btn-back" style="width:100%;margin-bottom:8px;" onclick="reset()">← Retour</button>
+      <div style="font-size:clamp(22px,4vw,30px);font-weight:900;color:#fff;">Code administrateur</div>
+      <div style="font-size:clamp(12px,2vw,15px);color:rgba(255,255,255,0.5);">Accès réservé au responsable</div>
+      <div class="dots" id="dots-admin">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      </div>
+      <div class="keypad" id="keypad-admin" style="width:100%;max-width:280px;gap:8px;"></div>
+    </div>
+  </div>
+
+  <!-- ADMIN DASHBOARD -->
+  <div class="view" id="v-admin">
+    <div class="admin-inner">
+      <div class="admin-topbar">
+        <div>
+          <div class="admin-title-txt">Caisses du jour</div>
+          <div style="font-size:clamp(11px,1.5vw,13px);color:rgba(255,255,255,0.4);margin-top:2px;" id="admin-date-lbl"></div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="admin-btn" onclick="showAdmin()">🔄 Actualiser</button>
+          <button class="admin-btn" onclick="reset()">✕ Fermer</button>
+        </div>
+      </div>
+      <div class="admin-stats-grid">
+        <div class="admin-stat-box"><div class="admin-stat-val" id="adm-count">0</div><div class="admin-stat-lbl">Déclarations</div></div>
+        <div class="admin-stat-box"><div class="admin-stat-val" id="adm-techs">0</div><div class="admin-stat-lbl">Techniciens</div></div>
+        <div class="admin-stat-box"><div class="admin-stat-val" id="adm-total" style="font-size:clamp(18px,3.5vw,30px);">0 €</div><div class="admin-stat-lbl">Total espèces</div></div>
+      </div>
+      <div class="log-section-title">Déclarations</div>
+      <div class="log-grid" id="adm-log"></div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+// ═══ DATA ═══════════════════════════════════════════════════════
+let TECHS = JSON.parse(localStorage.getItem('dw_caisse_techs')||'null') || [];
+const ADMIN_CODE = "9999";
+let foundTech = null;
+let amountStr = '';
+let countdownTimer = null;
+
+// ═══ CLOCK ══════════════════════════════════════════════════════
+function updateClock(){
+  const now = new Date();
+  document.getElementById('clock').textContent = [now.getHours(),now.getMinutes(),now.getSeconds()].map(n=>String(n).padStart(2,'0')).join(':');
+  const jours = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  const mois = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  document.getElementById('datedisp').textContent = `${jours[now.getDay()]} ${now.getDate()} ${mois[now.getMonth()]} ${now.getFullYear()}`;
+}
+setInterval(updateClock,1000); updateClock();
+
+// ═══ SYNC ════════════════════════════════════════════════════════
+async function syncTechs(){
+  try {
+    if(!window.loadTechsFromFirebase) return;
+    const fb = await window.loadTechsFromFirebase();
+    if(fb && fb.length > 0){
+      TECHS = fb.filter(t=>!t.statut||t.statut==='actif')
+        .map(t=>({nom:t.nom,code:t.code||'0000',centre:t.centre||'Aeroville A',color:t.color||'#4ADE80',poste:t.poste||''}));
+      localStorage.setItem('dw_caisse_techs',JSON.stringify(TECHS));
+      initKeypads();
+    }
+  } catch(e) {}
+}
+
+// ═══ KEYPAD CODE ═════════════════════════════════════════════════
+const KL={'2':'ABC','3':'DEF','4':'GHI','5':'JKL','6':'MNO','7':'PQRS','8':'TUV','9':'WXYZ'};
+
+function buildKeypad(containerId, dotsId, onComplete){
+  const kp = document.getElementById(containerId);
+  kp.innerHTML = ''; let code = '';
+  function updateDots(state='normal'){
+    document.querySelectorAll(`#${dotsId} .dot`).forEach((d,i)=>{
+      d.className='dot';
+      if(state==='error') d.classList.add('err');
+      else if(state==='ok') d.classList.add('ok');
+      else if(i<code.length) d.classList.add('on');
+    });
+  }
+  function addDigit(d){ if(code.length>=4) return; code+=d; updateDots(); if(code.length===4) setTimeout(()=>{ onComplete(code,updateDots,()=>{code='';updateDots();}); },150); }
+  function delDigit(){ code=code.slice(0,-1); updateDots(); }
+  ['1','2','3','4','5','6','7','8','9','','0','⌫'].forEach(k=>{
+    const btn = document.createElement('button');
+    if(k===''){ btn.className='key empty'; kp.appendChild(btn); return; }
+    btn.className = 'key'+(k==='⌫'?' del':'');
+    btn.innerHTML = k==='⌫' ? '⌫' : k+(KL[k]?`<span class="key-sub">${KL[k]}</span>`:'');
+    btn.addEventListener('click',()=>k==='⌫'?delDigit():addDigit(k));
+    kp.appendChild(btn);
+  });
+  updateDots();
+}
+
+function initKeypads(){
+  buildKeypad('keypad','dots',(code,updateDots,resetCode)=>{
+    if(code===ADMIN_CODE){ updateDots('ok'); setTimeout(()=>{ resetCode(); show('v-admin-code'); },400); return; }
+    const tech = TECHS.find(t=>t.code===code);
+    if(tech){ updateDots('ok'); foundTech=tech; setTimeout(()=>showMontant(),400); }
+    else{ updateDots('error'); setTimeout(()=>{ resetCode(); },900); setTimeout(()=>show('v-error'),1100); }
+  });
+  buildKeypad('keypad-admin','dots-admin',(code,updateDots,resetCode)=>{
+    if(code===ADMIN_CODE){ updateDots('ok'); setTimeout(()=>{ resetCode(); showAdmin(); },400); }
+    else{ updateDots('error'); setTimeout(()=>resetCode(),900); }
+  });
+}
+
+// ═══ MONTANT SCREEN ═══════════════════════════════════════════════
+function showMontant(){
+  amountStr = '';
+  const t = foundTech;
+  document.getElementById('m-avatar').textContent = t.nom.charAt(0);
+  document.getElementById('m-avatar').style.background = (t.color||'#4ADE80')+'33';
+  document.getElementById('m-avatar').style.color = t.color||'#4ADE80';
+  document.getElementById('m-name').textContent = t.nom;
+  document.getElementById('m-centre').textContent = '📍 '+(t.centre||'');
+  buildAmountKeypad();
+  updateAmountDisplay();
+  show('v-montant');
+}
+
+function buildAmountKeypad(){
+  const kp = document.getElementById('amount-keypad');
+  kp.innerHTML = '';
+  ['7','8','9','4','5','6','1','2','3',',','0','⌫'].forEach(k=>{
+    const btn = document.createElement('button');
+    btn.className = 'akey'+(k==='⌫'?' del':k===','?' virgule':k==='0'?' zero':'');
+    btn.textContent = k;
+    btn.addEventListener('click',()=>addAmountKey(k));
+    kp.appendChild(btn);
+  });
+}
+
+function addAmountKey(k){
+  if(k==='⌫'){
+    amountStr = amountStr.slice(0,-1);
+  } else if(k===','){
+    if(amountStr.includes(',')) return;
+    if(!amountStr) amountStr = '0';
+    amountStr += ',';
+  } else {
+    const parts = amountStr.split(',');
+    if(parts.length===2 && parts[1].length>=2) return;
+    if(amountStr==='0') amountStr = k;
+    else amountStr += k;
+  }
+  updateAmountDisplay();
+}
+
+function getAmountValue(){
+  if(!amountStr || amountStr==='0' || amountStr===',') return 0;
+  return parseFloat(amountStr.replace(',','.')) || 0;
+}
+
+function formatAmount(v){
+  return v.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+}
+
+function updateAmountDisplay(){
+  const display = document.getElementById('amount-display');
+  const val = document.getElementById('amount-val');
+  const btn = document.getElementById('btn-valider');
+  const v = getAmountValue();
+
+  if(!amountStr){
+    val.textContent = '0';
+    val.nextElementSibling.textContent = ',00 €';
+  } else if(amountStr.includes(',')){
+    const [ent,dec=''] = amountStr.split(',');
+    val.textContent = ent||'0';
+    val.nextElementSibling.textContent = ','+(dec.length===0?'__':dec.length===1?dec+'_':dec)+' €';
+  } else {
+    val.textContent = amountStr;
+    val.nextElementSibling.textContent = ',00 €';
+  }
+
+  display.classList.toggle('has-value', v>0);
+  btn.classList.toggle('enabled', v>0 && !amountStr.endsWith(','));
+}
+
+// ═══ SAUVEGARDER DÉCLARATION ══════════════════════════════════════
+async function confirmerCaisse(){
+  const v = getAmountValue();
+  if(v<=0) return;
+  const now = new Date();
+  const timeStr = [now.getHours(),now.getMinutes()].map(n=>String(n).padStart(2,'0')).join(':');
+  const dateStr = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
+  const entry = {
+    nom:foundTech.nom, code:foundTech.code, centre:foundTech.centre,
+    color:foundTech.color||'#4ADE80', date:dateStr, montant:v, time:timeStr, timestamp:now.getTime()
+  };
+  try {
+    if(window._db && window._firebase){
+      const {collection,addDoc} = window._firebase;
+      await addDoc(collection(window._db,'caisses'),entry);
+    }
+  } catch(e) {}
+
+  document.getElementById('sc-name').textContent = foundTech.nom;
+  document.getElementById('sc-centre').textContent = '📍 '+foundTech.centre;
+  document.getElementById('sc-amount').textContent = formatAmount(v);
+  document.getElementById('sc-info').textContent = `${dateStr} à ${timeStr} — Caisse enregistrée ✓`;
+  show('v-success'); startCountdown();
+}
+
+// ═══ COUNTDOWN ══════════════════════════════════════════════════
+function startCountdown(){
+  if(countdownTimer) clearInterval(countdownTimer);
+  let s = 6;
+  const fill = document.getElementById('prog-fill');
+  const txt = document.getElementById('prog-txt');
+  fill.style.transition='none'; fill.style.width='100%';
+  setTimeout(()=>{ fill.style.transition='width 1s linear'; fill.style.width='0%'; },50);
+  txt.textContent = `Retour dans ${s}s…`;
+  countdownTimer = setInterval(()=>{ s--; txt.textContent=`Retour dans ${s}s…`; if(s<=0){ clearInterval(countdownTimer); reset(); } },1000);
+}
+
+// ═══ ADMIN ══════════════════════════════════════════════════════
+async function showAdmin(){
+  show('v-admin');
+  const now = new Date();
+  const dateStr = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
+  document.getElementById('admin-date-lbl').textContent = dateStr;
+
+  let entries = [];
+  try {
+    if(window.loadCaissesFirebase) entries = await window.loadCaissesFirebase(dateStr);
+  } catch(e) {}
+
+  const byTech = {};
+  entries.forEach(e=>{ if(!byTech[e.nom]) byTech[e.nom]={nom:e.nom,centre:e.centre,color:e.color,decls:[]}; byTech[e.nom].decls.push({time:e.time,montant:e.montant}); });
+  const techList = Object.values(byTech);
+  const totalGlobal = entries.reduce((s,e)=>s+e.montant,0);
+
+  document.getElementById('adm-count').textContent = entries.length;
+  document.getElementById('adm-techs').textContent = techList.length;
+  document.getElementById('adm-total').textContent = formatAmount(totalGlobal);
+
+  const log = document.getElementById('adm-log');
+  if(techList.length===0){
+    log.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:rgba(255,255,255,0.3);padding:40px;font-size:15px;">Aucune déclaration aujourd\'hui</div>';
+    return;
+  }
+  log.innerHTML = techList.map(t=>{
+    const total = t.decls.reduce((s,d)=>s+d.montant,0);
+    return `<div class="log-card">
+      <div class="log-card-header">
+        <div class="log-av" style="background:${t.color||'#4ADE80'}33;color:${t.color||'#4ADE80'}">${t.nom.charAt(0)}</div>
+        <div><div class="log-name">${t.nom}</div><div class="log-centre">📍 ${t.centre}</div></div>
+        <div class="log-total">${formatAmount(total)}</div>
+      </div>
+      <div class="log-entries">
+        ${t.decls.map(d=>`<div class="log-entry"><span class="log-entry-time">${d.time}</span><span class="log-entry-amt">${formatAmount(d.montant)}</span></div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══ UTILS ══════════════════════════════════════════════════════
+function show(id){ document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function reset(){ if(countdownTimer) clearInterval(countdownTimer); foundTech=null; amountStr=''; initKeypads(); show('v-code'); }
+
+// ═══ INIT ═══════════════════════════════════════════════════════
+initKeypads();
+setTimeout(async()=>{ await syncTechs(); },2000);
+</script>
+</body>
+</html>
