@@ -154,61 +154,73 @@ body{
 .key.empty{opacity:0;pointer-events:none;}
 
 /* ═══ MONTANT SCREEN ═══ */
-#v-montant{align-items:center;justify-content:center;overflow:auto;}
+#v-montant{align-items:stretch;justify-content:stretch;overflow:hidden;}
 .montant-wrap{
-  text-align:center;width:100%;max-width:460px;
-  padding:clamp(16px,3vh,32px) clamp(20px,5vw,40px);
-  display:flex;flex-direction:column;gap:clamp(12px,2vh,20px);
+  width:100%;height:100%;
+  display:flex;align-items:center;justify-content:center;
+  padding:clamp(8px,1.2vh,14px) clamp(12px,2vw,20px);
+}
+.montant-left{display:flex;flex-direction:column;justify-content:center;}
+.montant-right{display:flex;flex-direction:column;justify-content:center;}
+/* Portrait: single column */
+@media (orientation:portrait){
+  .montant-wrap{flex-direction:column;gap:clamp(8px,1.5vh,12px);overflow-y:auto;}
+  .montant-left{gap:clamp(8px,1.2vh,12px);width:100%;align-items:center;}
+  .montant-right{gap:clamp(8px,1.2vh,12px);width:100%;}
+}
+/* Landscape: two columns */
+@media (orientation:landscape){
+  .montant-wrap{flex-direction:row;gap:clamp(14px,2.5vw,28px);}
+  .montant-left{flex:0 0 auto;width:clamp(200px,36%,320px);gap:clamp(10px,1.8vh,16px);align-items:stretch;}
+  .montant-right{flex:1;min-width:0;gap:clamp(6px,1.2vh,10px);}
 }
 .tech-pill{
-  display:inline-flex;align-items:center;gap:10px;
+  display:flex;align-items:center;gap:10px;
   background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);
-  border-radius:40px;padding:clamp(8px,1.5vh,12px) clamp(14px,2.5vw,22px);
-  justify-content:center;
+  border-radius:40px;padding:clamp(6px,1vh,10px) clamp(12px,2vw,18px);
 }
-.tech-pill-av{width:clamp(32px,5vw,42px);height:clamp(32px,5vw,42px);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:clamp(14px,2.5vw,18px);font-weight:900;flex-shrink:0;}
-.tech-pill-name{font-size:clamp(13px,2vw,16px);font-weight:800;color:#fff;}
-.tech-pill-centre{font-size:clamp(10px,1.4vw,12px);color:rgba(255,255,255,0.55);margin-top:1px;}
+.tech-pill-av{width:clamp(28px,3.5vw,38px);height:clamp(28px,3.5vw,38px);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:clamp(12px,1.8vw,16px);font-weight:900;flex-shrink:0;}
+.tech-pill-name{font-size:clamp(12px,1.6vw,15px);font-weight:800;color:#fff;}
+.tech-pill-centre{font-size:clamp(9px,1.1vw,11px);color:rgba(255,255,255,0.55);margin-top:1px;}
 .amount-display{
   background:rgba(0,0,0,0.2);
   border:2px solid rgba(255,255,255,0.2);
-  border-radius:clamp(14px,2vw,20px);
-  padding:clamp(14px,3vh,24px) clamp(16px,3vw,24px);
-  font-size:clamp(36px,9vw,64px);font-weight:900;
+  border-radius:clamp(10px,1.5vw,16px);
+  padding:clamp(8px,1.5vh,16px) clamp(12px,2vw,20px);
+  font-size:clamp(28px,6vw,52px);font-weight:900;
   font-variant-numeric:tabular-nums;letter-spacing:-1px;
   color:#fff;line-height:1;
-  min-height:clamp(70px,14vh,100px);
   display:flex;align-items:center;justify-content:center;
 }
 .amount-display.has-value{border-color:rgba(74,222,128,0.5);background:rgba(74,222,128,0.08);}
-.amount-unit{font-size:clamp(20px,4vw,32px);font-weight:700;color:rgba(255,255,255,0.5);margin-left:6px;}
-.amount-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(6px,1.2vw,10px);width:100%;}
+.amount-unit{font-size:clamp(16px,3vw,26px);font-weight:700;color:rgba(255,255,255,0.5);margin-left:6px;}
+.amount-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(4px,0.8vw,8px);width:100%;}
 .akey{
-  width:100%;aspect-ratio:1.4;
+  width:100%;aspect-ratio:1.5;
   background:rgba(255,255,255,0.12);
   border:1.5px solid rgba(255,255,255,0.2);
-  font-size:clamp(20px,4vw,28px);font-weight:700;color:#fff;
+  font-size:clamp(16px,3.2vw,24px);font-weight:700;color:#fff;
   cursor:pointer;font-family:'Inter',sans-serif;
   display:flex;align-items:center;justify-content:center;
-  border-radius:clamp(10px,1.5vw,14px);
+  border-radius:clamp(8px,1.2vw,12px);
   transition:all .1s;-webkit-user-select:none;user-select:none;
 }
 .akey:active{background:rgba(255,255,255,0.35);transform:scale(0.93);}
 .akey.del{color:rgba(255,255,255,0.5);}
-.akey.virgule{font-size:clamp(16px,3vw,22px);}
+.akey.virgule{font-size:clamp(13px,2.2vw,18px);}
 .akey.zero{background:rgba(255,255,255,0.08);}
 /* ═══ COLOR SELECTOR ═══ */
-.color-selector{display:grid;grid-template-columns:1fr 1fr;gap:clamp(8px,1.5vw,12px);width:100%;}
+.color-selector{display:grid;grid-template-columns:1fr 1fr;gap:clamp(6px,1vw,10px);width:100%;}
 .color-btn{
-  padding:clamp(14px,2.5vh,20px) 10px;
-  border-radius:clamp(12px,2vw,16px);
-  font-size:clamp(15px,2.5vw,20px);font-weight:800;
+  padding:clamp(10px,1.8vh,16px) 8px;
+  border-radius:clamp(10px,1.5vw,14px);
+  font-size:clamp(13px,1.8vw,17px);font-weight:800;
   cursor:pointer;font-family:'Inter',sans-serif;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
   border:2.5px solid transparent;
   transition:all .15s;-webkit-user-select:none;user-select:none;
 }
-.color-btn .cb-icon{font-size:clamp(28px,6vw,44px);}
+.color-btn .cb-icon{font-size:clamp(22px,4.5vw,36px);}
 .color-btn.rouge{background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.3);color:#FCA5A5;}
 .color-btn.rouge.selected{background:rgba(239,68,68,0.3);border-color:#EF4444;color:#fff;box-shadow:0 0 20px rgba(239,68,68,0.4);}
 .color-btn.vert{background:rgba(74,222,128,0.15);border-color:rgba(74,222,128,0.3);color:#86EFAC;}
@@ -216,10 +228,10 @@ body{
 .color-btn:active{transform:scale(0.96);}
 
 .btn-valider{
-  width:100%;padding:clamp(16px,3vh,22px);
+  width:100%;padding:clamp(10px,2vh,16px);
   background:rgba(255,255,255,0.95);
-  border:none;border-radius:clamp(14px,2vw,20px);
-  color:#15803D;font-size:clamp(18px,3vw,22px);font-weight:900;
+  border:none;border-radius:clamp(10px,1.5vw,16px);
+  color:#15803D;font-size:clamp(14px,2.2vw,19px);font-weight:900;
   cursor:pointer;font-family:'Inter',sans-serif;
   display:flex;align-items:center;justify-content:center;gap:10px;
   box-shadow:0 8px 30px rgba(0,0,0,0.2);
@@ -228,7 +240,7 @@ body{
 }
 .btn-valider.enabled{opacity:1;pointer-events:all;}
 .btn-valider.enabled:active{transform:scale(0.97);}
-.btn-back{width:100%;padding:clamp(11px,1.8vh,14px);background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.2);border-radius:clamp(10px,1.5vw,14px);color:rgba(255,255,255,0.7);font-size:clamp(13px,2vw,15px);font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
+.btn-back{width:100%;padding:clamp(7px,1.2vh,11px);background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.2);border-radius:clamp(8px,1.2vw,12px);color:rgba(255,255,255,0.7);font-size:clamp(11px,1.6vw,13px);font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
 
 /* ═══ SUCCESS ═══ */
 #v-success{align-items:center;justify-content:center;overflow:auto;}
@@ -324,32 +336,36 @@ body{
   <!-- SAISIE MONTANT -->
   <div class="view" id="v-montant">
     <div class="montant-wrap">
-      <div class="tech-pill">
-        <div class="tech-pill-av" id="m-avatar"></div>
+      <div class="montant-left">
+        <div class="tech-pill">
+          <div class="tech-pill-av" id="m-avatar"></div>
+          <div>
+            <div class="tech-pill-name" id="m-name"></div>
+            <div class="tech-pill-centre" id="m-centre"></div>
+          </div>
+        </div>
+        <div class="color-selector">
+          <button class="color-btn rouge" id="btn-rouge" onclick="selectColor('rouge')">
+            <span class="cb-icon">🔴</span>
+            <span>Rouge</span>
+          </button>
+          <button class="color-btn vert" id="btn-vert" onclick="selectColor('vert')">
+            <span class="cb-icon">🟢</span>
+            <span>Vert</span>
+          </button>
+        </div>
+      </div>
+      <div class="montant-right">
         <div>
-          <div class="tech-pill-name" id="m-name"></div>
-          <div class="tech-pill-centre" id="m-centre"></div>
+          <div style="font-size:clamp(10px,1.3vw,12px);font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;text-align:center;">Montant espèces</div>
+          <div class="amount-display" id="amount-display">
+            <span id="amount-val">0</span><span class="amount-unit">,00 €</span>
+          </div>
         </div>
+        <div class="amount-keypad" id="amount-keypad"></div>
+        <button class="btn-valider" id="btn-valider" onclick="confirmerCaisse()">✅ Déclarer la caisse</button>
+        <button class="btn-back" onclick="reset()">← Ce n'est pas moi</button>
       </div>
-      <div class="color-selector">
-        <button class="color-btn rouge" id="btn-rouge" onclick="selectColor('rouge')">
-          <span class="cb-icon">🔴</span>
-          <span>Rouge</span>
-        </button>
-        <button class="color-btn vert" id="btn-vert" onclick="selectColor('vert')">
-          <span class="cb-icon">🟢</span>
-          <span>Vert</span>
-        </button>
-      </div>
-      <div>
-        <div style="font-size:clamp(11px,1.5vw,13px);font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;text-align:center;">Montant espèces</div>
-        <div class="amount-display" id="amount-display">
-          <span id="amount-val">0</span><span class="amount-unit">,00 €</span>
-        </div>
-      </div>
-      <div class="amount-keypad" id="amount-keypad"></div>
-      <button class="btn-valider" id="btn-valider" onclick="confirmerCaisse()">✅ Déclarer la caisse</button>
-      <button class="btn-back" onclick="reset()">← Ce n'est pas moi</button>
     </div>
   </div>
 
