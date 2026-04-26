@@ -189,6 +189,24 @@ body{
 .akey.del{color:rgba(255,255,255,0.5);}
 .akey.virgule{font-size:clamp(16px,3vw,22px);}
 .akey.zero{background:rgba(255,255,255,0.08);}
+/* ═══ COLOR SELECTOR ═══ */
+.color-selector{display:grid;grid-template-columns:1fr 1fr;gap:clamp(8px,1.5vw,12px);width:100%;}
+.color-btn{
+  padding:clamp(14px,2.5vh,20px) 10px;
+  border-radius:clamp(12px,2vw,16px);
+  font-size:clamp(15px,2.5vw,20px);font-weight:800;
+  cursor:pointer;font-family:'Inter',sans-serif;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  border:2.5px solid transparent;
+  transition:all .15s;-webkit-user-select:none;user-select:none;
+}
+.color-btn .cb-icon{font-size:clamp(28px,6vw,44px);}
+.color-btn.rouge{background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.3);color:#FCA5A5;}
+.color-btn.rouge.selected{background:rgba(239,68,68,0.3);border-color:#EF4444;color:#fff;box-shadow:0 0 20px rgba(239,68,68,0.4);}
+.color-btn.vert{background:rgba(74,222,128,0.15);border-color:rgba(74,222,128,0.3);color:#86EFAC;}
+.color-btn.vert.selected{background:rgba(74,222,128,0.3);border-color:#4ADE80;color:#fff;box-shadow:0 0 20px rgba(74,222,128,0.4);}
+.color-btn:active{transform:scale(0.96);}
+
 .btn-valider{
   width:100%;padding:clamp(16px,3vh,22px);
   background:rgba(255,255,255,0.95);
@@ -305,8 +323,18 @@ body{
           <div class="tech-pill-centre" id="m-centre"></div>
         </div>
       </div>
+      <div class="color-selector">
+        <button class="color-btn rouge" id="btn-rouge" onclick="selectColor('rouge')">
+          <span class="cb-icon">🔴</span>
+          <span>Rouge</span>
+        </button>
+        <button class="color-btn vert" id="btn-vert" onclick="selectColor('vert')">
+          <span class="cb-icon">🟢</span>
+          <span>Vert</span>
+        </button>
+      </div>
       <div>
-        <div style="font-size:clamp(11px,1.5vw,13px);font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;text-align:center;">Montant espèces à déclarer</div>
+        <div style="font-size:clamp(11px,1.5vw,13px);font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;text-align:center;">Montant espèces</div>
         <div class="amount-display" id="amount-display">
           <span id="amount-val">0</span><span class="amount-unit">,00 €</span>
         </div>
@@ -388,6 +416,7 @@ let TECHS = JSON.parse(localStorage.getItem('dw_caisse_techs')||'null') || [];
 const ADMIN_CODE = "9999";
 let foundTech = null;
 let amountStr = '';
+let selectedColor = null;
 let countdownTimer = null;
 
 // ═══ CLOCK ══════════════════════════════════════════════════════
@@ -455,8 +484,18 @@ function initKeypads(){
 }
 
 // ═══ MONTANT SCREEN ═══════════════════════════════════════════════
+function selectColor(c){
+  selectedColor = c;
+  document.getElementById('btn-rouge').classList.toggle('selected', c==='rouge');
+  document.getElementById('btn-vert').classList.toggle('selected', c==='vert');
+  updateAmountDisplay();
+}
+
 function showMontant(){
   amountStr = '';
+  selectedColor = null;
+  document.getElementById('btn-rouge').classList.remove('selected');
+  document.getElementById('btn-vert').classList.remove('selected');
   const t = foundTech;
   document.getElementById('m-avatar').textContent = t.nom.charAt(0);
   document.getElementById('m-avatar').style.background = (t.color||'#4ADE80')+'33';
@@ -523,8 +562,8 @@ function updateAmountDisplay(){
     val.nextElementSibling.textContent = ',00 €';
   }
 
-  display.classList.toggle('has-value', v>0);
-  btn.classList.toggle('enabled', v>0 && !amountStr.endsWith(','));
+  display.classList.toggle('has-value', v>0 && !!selectedColor);
+  btn.classList.toggle('enabled', v>0 && !amountStr.endsWith(',') && !!selectedColor);
 }
 
 // ═══ SAUVEGARDER DÉCLARATION ══════════════════════════════════════
@@ -536,7 +575,8 @@ async function confirmerCaisse(){
   const dateStr = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
   const entry = {
     nom:foundTech.nom, code:foundTech.code, centre:foundTech.centre,
-    color:foundTech.color||'#4ADE80', date:dateStr, montant:v, time:timeStr, timestamp:now.getTime()
+    color:foundTech.color||'#4ADE80', date:dateStr, montant:v, time:timeStr,
+    timestamp:now.getTime(), couleur:selectedColor
   };
   try {
     if(window._db && window._firebase){
@@ -545,10 +585,12 @@ async function confirmerCaisse(){
     }
   } catch(e) {}
 
+  const colorIcon = selectedColor==='rouge' ? '🔴' : '🟢';
   document.getElementById('sc-name').textContent = foundTech.nom;
   document.getElementById('sc-centre').textContent = '📍 '+foundTech.centre;
   document.getElementById('sc-amount').textContent = formatAmount(v);
-  document.getElementById('sc-info').textContent = `${dateStr} à ${timeStr} — Caisse enregistrée ✓`;
+  document.getElementById('sc-amount').style.color = selectedColor==='rouge' ? '#FCA5A5' : '#4ADE80';
+  document.getElementById('sc-info').textContent = `${colorIcon} ${selectedColor==='rouge'?'Rouge':'Vert'} — ${dateStr} à ${timeStr} ✓`;
   show('v-success'); startCountdown();
 }
 
@@ -577,7 +619,7 @@ async function showAdmin(){
   } catch(e) {}
 
   const byTech = {};
-  entries.forEach(e=>{ if(!byTech[e.nom]) byTech[e.nom]={nom:e.nom,centre:e.centre,color:e.color,decls:[]}; byTech[e.nom].decls.push({time:e.time,montant:e.montant}); });
+  entries.forEach(e=>{ if(!byTech[e.nom]) byTech[e.nom]={nom:e.nom,centre:e.centre,color:e.color,decls:[]}; byTech[e.nom].decls.push({time:e.time,montant:e.montant,couleur:e.couleur}); });
   const techList = Object.values(byTech);
   const totalGlobal = entries.reduce((s,e)=>s+e.montant,0);
 
@@ -592,14 +634,22 @@ async function showAdmin(){
   }
   log.innerHTML = techList.map(t=>{
     const total = t.decls.reduce((s,d)=>s+d.montant,0);
+    const totalR = t.decls.filter(d=>d.couleur!=='vert').reduce((s,d)=>s+d.montant,0);
+    const totalV = t.decls.filter(d=>d.couleur==='vert').reduce((s,d)=>s+d.montant,0);
     return `<div class="log-card">
       <div class="log-card-header">
         <div class="log-av" style="background:${t.color||'#4ADE80'}33;color:${t.color||'#4ADE80'}">${t.nom.charAt(0)}</div>
         <div><div class="log-name">${t.nom}</div><div class="log-centre">📍 ${t.centre}</div></div>
-        <div class="log-total">${formatAmount(total)}</div>
+        <div style="margin-left:auto;text-align:right;">
+          <div class="log-total">${formatAmount(total)}</div>
+          <div style="font-size:10px;margin-top:2px;">${totalR>0?`<span style="color:#FCA5A5;">🔴 ${formatAmount(totalR)}</span>`:''}${totalR>0&&totalV>0?' ':''}${totalV>0?`<span style="color:#4ADE80;">🟢 ${formatAmount(totalV)}</span>`:''}</div>
+        </div>
       </div>
       <div class="log-entries">
-        ${t.decls.map(d=>`<div class="log-entry"><span class="log-entry-time">${d.time}</span><span class="log-entry-amt">${formatAmount(d.montant)}</span></div>`).join('')}
+        ${t.decls.map(d=>`<div class="log-entry">
+          <span class="log-entry-time">${d.couleur==='vert'?'🟢':'🔴'} ${d.time}</span>
+          <span class="log-entry-amt">${formatAmount(d.montant)}</span>
+        </div>`).join('')}
       </div>
     </div>`;
   }).join('');
