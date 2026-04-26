@@ -49,6 +49,14 @@ window.loadTechsFromFirebase = async function() {
   return null;
 };
 
+window.loadCaisseTechsAllowed = async function() {
+  try {
+    const snap = await getDoc(doc(db,'portail','caisse_techs'));
+    if(snap.exists()) return JSON.parse(snap.data().data);
+  } catch(e){}
+  return null;
+};
+
 window.loadCaissesFirebase = async function(dateStr) {
   try {
     const snap = await getDocs(collection(db,'caisses'));
@@ -433,10 +441,17 @@ setInterval(updateClock,1000); updateClock();
 async function syncTechs(){
   try {
     if(!window.loadTechsFromFirebase) return;
-    const fb = await window.loadTechsFromFirebase();
+    const [fb, allowed] = await Promise.all([
+      window.loadTechsFromFirebase(),
+      window.loadCaisseTechsAllowed ? window.loadCaisseTechsAllowed() : null
+    ]);
     if(fb && fb.length > 0){
-      TECHS = fb.filter(t=>!t.statut||t.statut==='actif')
+      let techs = fb.filter(t=>!t.statut||t.statut==='actif')
         .map(t=>({nom:t.nom,code:t.code||'0000',centre:t.centre||'Aeroville A',color:t.color||'#4ADE80',poste:t.poste||''}));
+      if(allowed && allowed.length > 0){
+        techs = techs.filter(t=>allowed.includes(t.nom));
+      }
+      TECHS = techs;
       localStorage.setItem('dw_caisse_techs',JSON.stringify(TECHS));
       initKeypads();
     }
