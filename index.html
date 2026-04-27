@@ -66,6 +66,19 @@ window.loadCaissesFirebase = async function(dateStr) {
   } catch(e){ return []; }
 };
 
+window.loadCaissesMois = async function(month, year) {
+  try {
+    const snap = await getDocs(collection(db,'caisses'));
+    const data=[];
+    snap.forEach(d=>data.push({...d.data(),_id:d.id}));
+    return data.filter(e=>{
+      if(!e.date) return false;
+      const p=e.date.split('/');
+      return parseInt(p[1])-1===month && parseInt(p[2])===year;
+    }).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+  } catch(e){ return []; }
+};
+
 let _techListenerReady = false;
 onSnapshot(doc(db,'portail','techs'), (snap) => {
   if (!_techListenerReady) { _techListenerReady = true; return; }
@@ -297,6 +310,41 @@ body{
 .log-entry{display:flex;justify-content:space-between;align-items:center;padding:4px 8px;background:rgba(255,255,255,0.06);border-radius:6px;}
 .log-entry-time{font-size:clamp(10px,1.2vw,11px);color:rgba(255,255,255,0.5);}
 .log-entry-amt{font-size:clamp(11px,1.5vw,13px);font-weight:700;color:rgba(255,255,255,0.9);}
+
+/* ═══ ADMIN CONTROLS ═══ */
+.admin-controls{display:flex;align-items:center;flex-wrap:wrap;gap:8px;}
+.period-tabs{display:flex;background:rgba(0,0,0,0.2);border-radius:10px;padding:3px;gap:2px;}
+.period-tab{padding:clamp(5px,1vh,8px) clamp(12px,2vw,18px);border-radius:8px;font-size:clamp(11px,1.5vw,13px);font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;background:transparent;border:none;color:rgba(255,255,255,0.5);transition:all .15s;}
+.period-tab.active{background:rgba(255,255,255,0.18);color:#fff;}
+.month-nav{display:none;align-items:center;gap:4px;background:rgba(0,0,0,0.15);border-radius:10px;padding:3px 8px;}
+.month-nav-btn{background:none;border:none;color:rgba(255,255,255,0.7);font-size:14px;cursor:pointer;padding:3px 8px;border-radius:6px;font-family:'Inter',sans-serif;transition:all .1s;}
+.month-nav-btn:active{background:rgba(255,255,255,0.15);}
+.month-nav-label{font-size:clamp(11px,1.5vw,13px);font-weight:700;color:#fff;min-width:clamp(90px,10vw,115px);text-align:center;}
+.centre-select{background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.2);border-radius:10px;color:#fff;font-size:clamp(11px,1.5vw,13px);font-weight:600;padding:clamp(5px,1vh,8px) 28px clamp(5px,1vh,8px) clamp(10px,2vw,14px);cursor:pointer;font-family:'Inter',sans-serif;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(255,255,255,0.5)' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-color:rgba(0,0,0,0.2);}
+.centre-select option{background:#166534;color:#fff;}
+
+/* ═══ MONTH VIEW ═══ */
+.month-view{display:flex;flex-direction:column;gap:5px;}
+.day-row{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:clamp(8px,1.2vw,12px);padding:clamp(8px,1.5vh,12px) clamp(12px,2vw,16px);display:flex;flex-direction:column;transition:background .15s;}
+.day-row-main{display:flex;align-items:center;gap:10px;cursor:pointer;}
+.day-info{min-width:clamp(60px,7vw,85px);}
+.day-name{font-size:clamp(12px,1.8vw,14px);font-weight:800;color:#fff;}
+.day-decls-lbl{font-size:clamp(9px,1.1vw,11px);color:rgba(255,255,255,0.4);margin-top:1px;}
+.day-amounts{flex:1;display:flex;gap:clamp(6px,1.5vw,14px);flex-wrap:wrap;align-items:center;}
+.day-amt{font-size:clamp(11px,1.5vw,13px);font-weight:700;}
+.day-amt.rouge{color:#FCA5A5;}
+.day-amt.vert{color:#86EFAC;}
+.day-total{font-size:clamp(13px,2vw,16px);font-weight:900;color:#fff;min-width:clamp(70px,8vw,100px);text-align:right;}
+.day-chevron{font-size:10px;color:rgba(255,255,255,0.3);transition:transform .2s;margin-left:2px;flex-shrink:0;}
+.day-row.open .day-chevron{transform:rotate(180deg);}
+.day-cards{display:none;margin-top:10px;border-top:1px solid rgba(255,255,255,0.1);padding-top:10px;}
+.day-row.open .day-cards{display:block;}
+.month-total-row{background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);border-radius:clamp(8px,1.2vw,12px);padding:clamp(10px,1.8vh,14px) clamp(12px,2vw,16px);display:flex;align-items:center;gap:12px;margin-top:6px;flex-wrap:wrap;}
+.month-total-lbl{flex:1;font-size:clamp(11px,1.5vw,13px);font-weight:800;color:rgba(255,255,255,0.75);text-transform:uppercase;letter-spacing:.06em;}
+.month-total-amounts{display:flex;gap:clamp(8px,2vw,16px);align-items:center;flex-wrap:wrap;}
+.month-total-r{font-size:clamp(11px,1.5vw,13px);font-weight:700;color:#FCA5A5;}
+.month-total-v{font-size:clamp(11px,1.5vw,13px);font-weight:700;color:#86EFAC;}
+.month-total-val{font-size:clamp(15px,2.5vw,20px);font-weight:900;color:#4ADE80;}
 </style>
 </head>
 <body>
@@ -412,22 +460,35 @@ body{
   <div class="view" id="v-admin">
     <div class="admin-inner">
       <div class="admin-topbar">
-        <div>
-          <div class="admin-title-txt">Caisses du jour</div>
-          <div style="font-size:clamp(11px,1.5vw,13px);color:rgba(255,255,255,0.4);margin-top:2px;" id="admin-date-lbl"></div>
-        </div>
+        <div class="admin-title-txt">Caisses</div>
         <div style="display:flex;gap:8px;">
-          <button class="admin-btn" onclick="showAdmin()">🔄 Actualiser</button>
+          <button class="admin-btn" onclick="refreshAdmin()">🔄 Actualiser</button>
           <button class="admin-btn" onclick="reset()">✕ Fermer</button>
         </div>
       </div>
+      <div class="admin-controls">
+        <div class="period-tabs">
+          <button class="period-tab active" id="tab-jour" onclick="setPeriod('jour')">Aujourd'hui</button>
+          <button class="period-tab" id="tab-mois" onclick="setPeriod('mois')">Ce mois</button>
+        </div>
+        <div class="month-nav" id="month-nav">
+          <button class="month-nav-btn" onclick="prevMonth()">◀</button>
+          <span class="month-nav-label" id="month-label"></span>
+          <button class="month-nav-btn" onclick="nextMonth()">▶</button>
+        </div>
+        <select class="centre-select" id="centre-select" onchange="refreshAdmin()">
+          <option value="">Tous les centres</option>
+        </select>
+      </div>
+      <div style="font-size:clamp(11px,1.5vw,13px);color:rgba(255,255,255,0.4);" id="admin-date-lbl"></div>
       <div class="admin-stats-grid">
         <div class="admin-stat-box"><div class="admin-stat-val" id="adm-count">0</div><div class="admin-stat-lbl">Déclarations</div></div>
         <div class="admin-stat-box"><div class="admin-stat-val" id="adm-techs">0</div><div class="admin-stat-lbl">Techniciens</div></div>
         <div class="admin-stat-box"><div class="admin-stat-val" id="adm-total" style="font-size:clamp(18px,3.5vw,30px);">0 €</div><div class="admin-stat-lbl">Total espèces</div></div>
       </div>
-      <div class="log-section-title">Déclarations</div>
-      <div class="log-grid" id="adm-log"></div>
+      <div class="log-section-title" id="adm-section-lbl">Déclarations</div>
+      <div id="adm-log-wrap"><div class="log-grid" id="adm-log"></div></div>
+      <div id="adm-month-view" style="display:none;"></div>
     </div>
   </div>
 
@@ -638,32 +699,49 @@ function startCountdown(){
 }
 
 // ═══ ADMIN ══════════════════════════════════════════════════════
-async function showAdmin(){
-  show('v-admin');
-  const now = new Date();
-  const dateStr = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
-  document.getElementById('admin-date-lbl').textContent = dateStr;
+const MOIS_NOMS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const JOURS_COURTS = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+let adminPeriod = 'jour';
+let adminYear = new Date().getFullYear();
+let adminMonth = new Date().getMonth();
 
-  let entries = [];
-  try {
-    if(window.loadCaissesFirebase) entries = await window.loadCaissesFirebase(dateStr);
-  } catch(e) {}
+function setPeriod(p){
+  adminPeriod = p;
+  document.getElementById('tab-jour').classList.toggle('active', p==='jour');
+  document.getElementById('tab-mois').classList.toggle('active', p==='mois');
+  document.getElementById('month-nav').style.display = p==='mois' ? 'flex' : 'none';
+  refreshAdmin();
+}
 
+function prevMonth(){
+  adminMonth--; if(adminMonth<0){adminMonth=11;adminYear--;}
+  document.getElementById('month-label').textContent = MOIS_NOMS[adminMonth]+' '+adminYear;
+  refreshAdmin();
+}
+
+function nextMonth(){
+  adminMonth++; if(adminMonth>11){adminMonth=0;adminYear++;}
+  document.getElementById('month-label').textContent = MOIS_NOMS[adminMonth]+' '+adminYear;
+  refreshAdmin();
+}
+
+function updateCentreFilter(entries){
+  const sel = document.getElementById('centre-select');
+  const current = sel.value;
+  const centres = [...new Set(entries.map(e=>e.centre).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">Tous les centres</option>'
+    + centres.map(c=>`<option value="${c}"${current===c?' selected':''}>${c}</option>`).join('');
+}
+
+function buildLogCards(entries){
   const byTech = {};
-  entries.forEach(e=>{ if(!byTech[e.nom]) byTech[e.nom]={nom:e.nom,centre:e.centre,color:e.color,decls:[]}; byTech[e.nom].decls.push({time:e.time,montant:e.montant,couleur:e.couleur}); });
+  entries.forEach(e=>{
+    if(!byTech[e.nom]) byTech[e.nom]={nom:e.nom,centre:e.centre,color:e.color,decls:[]};
+    byTech[e.nom].decls.push({time:e.time,montant:e.montant,couleur:e.couleur});
+  });
   const techList = Object.values(byTech);
-  const totalGlobal = entries.reduce((s,e)=>s+e.montant,0);
-
-  document.getElementById('adm-count').textContent = entries.length;
-  document.getElementById('adm-techs').textContent = techList.length;
-  document.getElementById('adm-total').textContent = formatAmount(totalGlobal);
-
-  const log = document.getElementById('adm-log');
-  if(techList.length===0){
-    log.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:rgba(255,255,255,0.3);padding:40px;font-size:15px;">Aucune déclaration aujourd\'hui</div>';
-    return;
-  }
-  log.innerHTML = techList.map(t=>{
+  if(!techList.length) return '<div style="grid-column:1/-1;text-align:center;color:rgba(255,255,255,0.3);padding:30px;font-size:14px;">Aucune déclaration</div>';
+  return techList.map(t=>{
     const total = t.decls.reduce((s,d)=>s+d.montant,0);
     const totalR = t.decls.filter(d=>d.couleur!=='vert').reduce((s,d)=>s+d.montant,0);
     const totalV = t.decls.filter(d=>d.couleur==='vert').reduce((s,d)=>s+d.montant,0);
@@ -676,14 +754,110 @@ async function showAdmin(){
           <div style="font-size:10px;margin-top:2px;">${totalR>0?`<span style="color:#FCA5A5;">🔴 ${formatAmount(totalR)}</span>`:''}${totalR>0&&totalV>0?' ':''}${totalV>0?`<span style="color:#4ADE80;">🟢 ${formatAmount(totalV)}</span>`:''}</div>
         </div>
       </div>
-      <div class="log-entries">
-        ${t.decls.map(d=>`<div class="log-entry">
-          <span class="log-entry-time">${d.couleur==='vert'?'🟢':'🔴'} ${d.time}</span>
-          <span class="log-entry-amt">${formatAmount(d.montant)}</span>
-        </div>`).join('')}
-      </div>
+      <div class="log-entries">${t.decls.map(d=>`<div class="log-entry">
+        <span class="log-entry-time">${d.couleur==='vert'?'🟢':'🔴'} ${d.time}</span>
+        <span class="log-entry-amt">${formatAmount(d.montant)}</span>
+      </div>`).join('')}</div>
     </div>`;
   }).join('');
+}
+
+function updateStats(entries){
+  const techs = new Set(entries.map(e=>e.nom));
+  document.getElementById('adm-count').textContent = entries.length;
+  document.getElementById('adm-techs').textContent = techs.size;
+  document.getElementById('adm-total').textContent = formatAmount(entries.reduce((s,e)=>s+e.montant,0));
+}
+
+function renderMoisView(entries){
+  const mv = document.getElementById('adm-month-view');
+  if(!entries.length){
+    mv.innerHTML='<div style="text-align:center;color:rgba(255,255,255,0.3);padding:40px;font-size:14px;">Aucune déclaration ce mois</div>';
+    return;
+  }
+  const byDay = {};
+  entries.forEach(e=>{
+    if(!byDay[e.date]) byDay[e.date]={date:e.date,decls:[]};
+    byDay[e.date].decls.push(e);
+  });
+  const days = Object.values(byDay).sort((a,b)=>{
+    const [da,ma,ya]=a.date.split('/'); const [db,mb,yb]=b.date.split('/');
+    return new Date(yb,mb-1,db)-new Date(ya,ma-1,da);
+  });
+  const totalMois = entries.reduce((s,e)=>s+e.montant,0);
+  const totalMoisR = entries.filter(e=>e.couleur!=='vert').reduce((s,e)=>s+e.montant,0);
+  const totalMoisV = entries.filter(e=>e.couleur==='vert').reduce((s,e)=>s+e.montant,0);
+
+  mv.innerHTML = `<div class="month-view">${days.map((day,i)=>{
+    const [dd,mm,yy]=day.date.split('/');
+    const nomJour=JOURS_COURTS[new Date(yy,mm-1,dd).getDay()];
+    const totalJ=day.decls.reduce((s,e)=>s+e.montant,0);
+    const totalJR=day.decls.filter(e=>e.couleur!=='vert').reduce((s,e)=>s+e.montant,0);
+    const totalJV=day.decls.filter(e=>e.couleur==='vert').reduce((s,e)=>s+e.montant,0);
+    return `<div class="day-row" id="day-row-${i}">
+      <div class="day-row-main" onclick="toggleDay(${i})">
+        <div class="day-info">
+          <div class="day-name">${nomJour} ${dd}</div>
+          <div class="day-decls-lbl">${day.decls.length} décl.</div>
+        </div>
+        <div class="day-amounts">
+          ${totalJR>0?`<span class="day-amt rouge">🔴 ${formatAmount(totalJR)}</span>`:''}
+          ${totalJV>0?`<span class="day-amt vert">🟢 ${formatAmount(totalJV)}</span>`:''}
+        </div>
+        <div class="day-total">${formatAmount(totalJ)}</div>
+        <span class="day-chevron">▼</span>
+      </div>
+      <div class="day-cards"><div class="log-grid">${buildLogCards(day.decls)}</div></div>
+    </div>`;
+  }).join('')}
+  <div class="month-total-row">
+    <div class="month-total-lbl">Total ${MOIS_NOMS[adminMonth]}</div>
+    <div class="month-total-amounts">
+      ${totalMoisR>0?`<span class="month-total-r">🔴 ${formatAmount(totalMoisR)}</span>`:''}
+      ${totalMoisV>0?`<span class="month-total-v">🟢 ${formatAmount(totalMoisV)}</span>`:''}
+      <span class="month-total-val">${formatAmount(totalMois)}</span>
+    </div>
+  </div></div>`;
+}
+
+function toggleDay(i){
+  document.getElementById('day-row-'+i).classList.toggle('open');
+}
+
+async function refreshAdmin(){
+  const centre = document.getElementById('centre-select').value;
+  if(adminPeriod==='jour'){
+    const now = new Date();
+    const dateStr = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
+    document.getElementById('admin-date-lbl').textContent = dateStr;
+    let entries = [];
+    try{ if(window.loadCaissesFirebase) entries = await window.loadCaissesFirebase(dateStr); }catch(e){}
+    updateCentreFilter(entries);
+    if(centre) entries = entries.filter(e=>e.centre===centre);
+    updateStats(entries);
+    document.getElementById('adm-section-lbl').textContent = 'Déclarations du jour';
+    document.getElementById('adm-log-wrap').style.display='';
+    document.getElementById('adm-month-view').style.display='none';
+    document.getElementById('adm-log').innerHTML = buildLogCards(entries);
+  } else {
+    document.getElementById('admin-date-lbl').textContent = MOIS_NOMS[adminMonth]+' '+adminYear;
+    let allEntries = [];
+    try{ if(window.loadCaissesMois) allEntries = await window.loadCaissesMois(adminMonth,adminYear); }catch(e){}
+    updateCentreFilter(allEntries);
+    let entries = centre ? allEntries.filter(e=>e.centre===centre) : allEntries;
+    updateStats(entries);
+    document.getElementById('adm-section-lbl').textContent = 'Détail par jour';
+    document.getElementById('adm-log-wrap').style.display='none';
+    document.getElementById('adm-month-view').style.display='';
+    renderMoisView(entries);
+  }
+}
+
+async function showAdmin(){
+  show('v-admin');
+  document.getElementById('month-label').textContent = MOIS_NOMS[adminMonth]+' '+adminYear;
+  document.getElementById('month-nav').style.display = adminPeriod==='mois' ? 'flex' : 'none';
+  await refreshAdmin();
 }
 
 // ═══ UTILS ══════════════════════════════════════════════════════
