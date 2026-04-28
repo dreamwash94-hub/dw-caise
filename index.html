@@ -26,7 +26,7 @@ document.head.appendChild(link);
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, query, where, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, query, where, doc, getDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 const firebaseConfig = {
   apiKey:"AIzaSyCSZqfL3G-DK0VzNmptblT7F_kgq5R4Oww",
   authDomain:"dreamwash-d4a2c.firebaseapp.com",
@@ -55,6 +55,10 @@ window.loadCaisseTechsAllowed = async function() {
     if(snap.exists()) return JSON.parse(snap.data().data);
   } catch(e){}
   return null;
+};
+
+window.deleteCaisseEntry = async function(id) {
+  try { await deleteDoc(doc(db,'caisses',id)); return true; } catch(e){ return false; }
 };
 
 window.loadCaissesFirebase = async function(dateStr) {
@@ -289,7 +293,7 @@ body{
 .admin-code-wrap{text-align:center;max-width:360px;width:100%;padding:clamp(24px,4vh,50px) clamp(20px,5vw,40px);display:flex;flex-direction:column;align-items:center;gap:clamp(12px,2.5vh,20px);}
 
 /* ═══ ADMIN DASHBOARD ═══ */
-#v-admin{align-items:stretch;flex-direction:column;}
+#v-admin{align-items:stretch;flex-direction:column;height:100%;min-height:0;}
 .admin-inner{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:clamp(14px,2.5vh,28px) clamp(16px,3vw,32px);display:flex;flex-direction:column;gap:clamp(10px,2vh,18px);}
 .admin-topbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
 .admin-title-txt{font-size:clamp(18px,3.5vw,28px);font-weight:900;color:#fff;}
@@ -310,6 +314,9 @@ body{
 .log-entry{display:flex;justify-content:space-between;align-items:center;padding:4px 8px;background:rgba(255,255,255,0.06);border-radius:6px;}
 .log-entry-time{font-size:clamp(10px,1.2vw,11px);color:rgba(255,255,255,0.5);}
 .log-entry-amt{font-size:clamp(11px,1.5vw,13px);font-weight:700;color:rgba(255,255,255,0.9);}
+.log-entry-del{background:none;border:none;color:rgba(239,68,68,0.4);font-size:13px;cursor:pointer;padding:2px 5px;border-radius:4px;transition:all .15s;flex-shrink:0;line-height:1;}
+.log-entry-del:hover{color:#EF4444;background:rgba(239,68,68,0.12);}
+.log-entry-del:active{transform:scale(0.9);}
 
 /* ═══ ADMIN CONTROLS ═══ */
 .admin-controls{display:flex;align-items:center;flex-wrap:wrap;gap:8px;}
@@ -737,7 +744,7 @@ function buildLogCards(entries){
   const byTech = {};
   entries.forEach(e=>{
     if(!byTech[e.nom]) byTech[e.nom]={nom:e.nom,centre:e.centre,color:e.color,decls:[]};
-    byTech[e.nom].decls.push({time:e.time,montant:e.montant,couleur:e.couleur});
+    byTech[e.nom].decls.push({time:e.time,montant:e.montant,couleur:e.couleur,_id:e._id});
   });
   const techList = Object.values(byTech);
   if(!techList.length) return '<div style="grid-column:1/-1;text-align:center;color:rgba(255,255,255,0.3);padding:30px;font-size:14px;">Aucune déclaration</div>';
@@ -757,6 +764,7 @@ function buildLogCards(entries){
       <div class="log-entries">${t.decls.map(d=>`<div class="log-entry">
         <span class="log-entry-time">${d.couleur==='vert'?'🟢':'🔴'} ${d.time}</span>
         <span class="log-entry-amt">${formatAmount(d.montant)}</span>
+        ${d._id?`<button class="log-entry-del" onclick="deleteEntry('${d._id}')" title="Supprimer">🗑</button>`:''}
       </div>`).join('')}</div>
     </div>`;
   }).join('');
@@ -822,6 +830,14 @@ function renderMoisView(entries){
 
 function toggleDay(i){
   document.getElementById('day-row-'+i).classList.toggle('open');
+}
+
+async function deleteEntry(id){
+  if(!confirm('Supprimer cette déclaration ?')) return;
+  if(window.deleteCaisseEntry){
+    const ok = await window.deleteCaisseEntry(id);
+    if(ok) await refreshAdmin();
+  }
 }
 
 async function refreshAdmin(){
